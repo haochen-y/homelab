@@ -27,16 +27,16 @@ sudo systemctl set-default graphical.target
 Edit `/etc/systemd/logind.conf` and override the handlers to stop lid actions:
 
 ```ini
-HandlePowerKey=ignore
-HandleRebootKey=ignore
-HandleSuspendKey=ignore
-HandleHibernateKey=ignore
+HandleLidSwitch=ignore
+HandleLidSwitchExternalPower=ignore
+HandleLidSwitchDocked=ignore
 ```
 
 ### Optional minimalist overrides
 
 ```ini
 HandlePowerKey=ignore
+HandleRebootKey=ignore
 HandleSuspendKey=ignore
 HandleHibernateKey=ignore
 ```

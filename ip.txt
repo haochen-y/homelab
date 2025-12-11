@@ -3,3 +3,4 @@ mac: 192.168.0.168
 pc: 192.168.0.176
 
 server: 192.168.0.193
+https://poop-repo.duckdns.org
