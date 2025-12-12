@@ -19,7 +19,7 @@ Use this to connect clients (Docker, PyPI/pip, Conda, Hugging Face, Ubuntu APT) 
   | PyPI          | `pypi`              | proxy   | https://pypi.org/                       |
   | Conda         | `conda`             | proxy   | https://conda.anaconda.org/conda-forge  |
   | Hugging Face  | `hf-proxy`          | proxy   | https://huggingface.co                  |
-  | Ubuntu (APT)  | `ubuntu-jammy`      | proxy   | http://www.club.cc.cmu.edu/pub/ubuntu/ (jammy)
+  | Ubuntu (APT)  | `ubuntu-jammy`      | proxy   | http://mirror.math.princeton.edu/pub/ubuntu/ (jammy)
 
 ---
 
