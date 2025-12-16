@@ -7,8 +7,8 @@ Use this to connect clients (Docker, PyPI/pip, Conda, Hugging Face, Ubuntu APT) 
 
 ## 0. At a Glance
 
-- **Base URL:** `http://poop-repo.duckdns.org:4926`
-- **Hosts to use for `<HOST>`:** `poop-repo.duckdns.org` or your LAN IP, e.g. `192.168.0.193`.
+- **Base URL:** `http://bigmaninc.party:4926`
+- **Hosts to use for `<HOST>`:** `bigmaninc.party:4926/docker` or your LAN IP, e.g. `192.168.0.193`.
 - **Repositories:**
 
   | Format        | Repository          | Type    | Upstream                                |
@@ -32,34 +32,9 @@ If you just need a ready account:
 - Username: `bozo`
 - Password: `4444`
 
-To add more users (short version):
-
-1. Log in to `http://<HOST>:4926` as an admin.
-2. **Administration → Security → Users → Create local user**.
-3. Fill user info, set `Active`, choose a strong password.
-4. Assign roles for the repos they need (read-only for most; add write per repo if needed).
-5. Share their username/password plus `<HOST>` and this guide.
-
-
 ## 2. Docker – Self-Hosted Images + Docker Hub Cache
 
-You have:
-
-- `docker-hosted` (hosted)
-- `docker-proxy` (proxy)
-- `docker` (group: hosted + proxy)
-
-Nexus uses **path-based routing**: everything over port `4926`.
-
-### 2.1 Enable Docker realm (Nexus-side, once)
-
-In Nexus UI:
-
-1. **Administration → Security → Realms**
-2. Move **Docker Bearer Token Realm** from **Available** to **Active** (under `Nexus Authentication Realm`).
-3. Save.
-
-### 2.2 Configure Docker daemon (insecure registry)
+### 2.1 Configure Docker daemon (insecure registry)
 
 **File (Linux):** `/etc/docker/daemon.json`
 
@@ -67,9 +42,11 @@ Create or edit:
 
 ```json
 {
-  "insecure-registries": ["<HOST>:4926"]
+  "insecure-registries": ["bigmaninc.party:4926"]
 }
 ```
+
+To make daemon always pull from nexus
 
 If there are existing entries, just add the `"insecure-registries"` array or append to it.
 
@@ -80,43 +57,39 @@ sudo systemctl restart docker
 ```
 
 On Docker Desktop (Mac/Windows):
-Settings → Docker Engine → add `"insecure-registries": ["<HOST>:4926"]` → Apply & Restart.
+Settings → Docker Engine → add `"insecure-registries": ["bigmaninc.party:4926:"]` → Apply & Restart.
 
-### 2.3 Authenticate to Nexus
+### 2.2 Authenticate to Nexus
 
 ```bash
-docker login <HOST>:4926
+docker login bigmaninc.party:4926
 ```
 
 * Username: your Nexus user (`admin`, `friend1`, …)
 * Password: that user’s password
 
-### 2.4 Push your own images (via `docker`)
+### 2.3 Push your own images (via `docker`)
 
 ```bash
 docker pull alpine:latest
 
 # Tag image to go through the group repo
-docker tag alpine:latest <HOST>:4926/docker/alpine-test:1.0
+docker tag alpine:latest bigmaninc.party:4926/docker/alpine-test:1.0
 
 # Push
-docker push <HOST>:4926/docker/alpine-test:1.0
+docker push bigmaninc.party:4926/docker/alpine-test:1.0
 
 # Test pulling back
-docker pull <HOST>:4926/docker/alpine-test:1.0
+docker pull bigmaninc.party:4926/docker/alpine-test:1.0
 ```
 
-### 2.5 Use Nexus as Docker Hub cache
+### 2.4 Use Nexus as Docker Hub cache
 
 Pull public images through the group repo:
 
 ```bash
-docker pull <HOST>:4926/docker/alpine:latest
+docker pull bigmaninc.party:4926/docker/alpine:latest
 ```
-
-* First time: Nexus pulls from Docker Hub via `docker-proxy` and caches.
-* Next time (and from other clients): Nexus serves from cache.
-
 ---
 
 ## 3. PyPI / pip – Private Python Packages + pypi.org Cache
@@ -132,8 +105,8 @@ You have:
 
 ```ini
 [global]
-index-url = http://<HOST>:4926/repository/pypi/simple
-trusted-host = <HOST>
+index-url = http://bigmaninc.party:4926/repository/pypi/simple
+trusted-host = bigmaninc.party
 ```
 
 Usage:
@@ -154,8 +127,8 @@ If you require login for `pypi`:
 
 ```ini
 [global]
-index-url = http://friend1:password@<HOST>:4926/repository/pypi/simple
-trusted-host = <HOST>
+index-url = http://friend1:password@bigmaninc.party:4926/repository/pypi/simple
+trusted-host = bigmaninc.party
 ```
 
 **Option B – Use keyring (more secure, more setup):**
@@ -164,8 +137,8 @@ trusted-host = <HOST>
 
    ```ini
    [global]
-   index-url = http://<HOST>:4926/repository/pypi/simple
-   trusted-host = <HOST>
+   index-url = http://bigmaninc.party:4926/repository/pypi/simple
+   trusted-host = bigmaninc.party
    ```
 
 2. Install keyring:
@@ -192,7 +165,7 @@ You have:
 channels:
   - conda-forge
 
-channel_alias: http://<HOST>:4926/repository/
+channel_alias: http://bigmaninc.party:4926/repository/
 default_channels: []
 channel_priority: strict
 ssl_verify: true  # set to false if you only use HTTP in a trusted LAN
@@ -201,7 +174,7 @@ ssl_verify: true  # set to false if you only use HTTP in a trusted LAN
 Interpretation:
 
 * `conda-forge` channel becomes:
-  `http://<HOST>:4926/repository/conda`
+  `http://bigmaninc.party:4926/repository/conda`
 * `channel_priority: strict` keeps things from one ecosystem (conda-forge) and avoids mixing with defaults.
 
 ### 4.2 Create and use environments
@@ -227,7 +200,7 @@ If you protect `conda`:
 You can embed credentials in `channel_alias`:
 
 ```yaml
-channel_alias: http://friend1:password@<HOST>:4926/repository/
+channel_alias: http://friend1:password@bigmaninc.party:4926/repository/
 ```
 
 Now `conda-forge` access uses `friend1`’s Nexus account.
@@ -236,8 +209,6 @@ Now `conda-forge` access uses `friend1`’s Nexus account.
 
 ## 5. Hugging Face – Model Cache via Nexus
 
-You have:
-
 * `hf-proxy` (proxy → `https://huggingface.co`)
 
 ### 5.1 Basic usage (public models, anonymous Nexus read)
@@ -245,7 +216,7 @@ You have:
 Set environment variable:
 
 ```bash
-export HF_HUB_BASE_URL="http://<HOST>:4926/repository/hf-proxy"
+export HF_HUB_BASE_URL="http://bigmaninc.party:4926/repository/hf-proxy"
 ```
 
 Example in Python:
@@ -256,12 +227,9 @@ from huggingface_hub import hf_hub_download
 hf_hub_download(
     repo_id="bert-base-uncased",
     filename="pytorch_model.bin",
-    base_url="http://<HOST>:4926/repository/hf-proxy",
+    base_url="http://bigmaninc.party:4926/repository/hf-proxy",
 )
 ```
-
-* First access: Nexus fetches from Hugging Face and caches.
-* Next access: served from Nexus cache.
 
 ### 5.2 Private Hugging Face models
 
@@ -269,39 +237,25 @@ For private models, you still need HF auth:
 
 ```bash
 export HF_TOKEN="hf_xxx_your_token_here"
-export HF_HUB_BASE_URL="http://<HOST>:4926/repository/hf-proxy"
+export HF_HUB_BASE_URL="http://bigmaninc.party:4926/repository/hf-proxy"
 ```
 
 Or login via `huggingface-cli login`.
 
 Nexus forwards authenticated requests upstream; the HF token stays on the client side.
 
-### 5.3 Nexus auth for Hugging Face proxy (optional)
-
-If you lock down `hf-proxy` in Nexus and require login:
-
-You can embed HTTP Basic auth in the base URL (only on trusted machines):
-
-```bash
-export HF_HUB_BASE_URL="http://friend1:password@<HOST>:4926/repository/hf-proxy"
-```
-
-Now HF tools will talk to Nexus using `friend1`’s credentials, and Nexus will still talk to Hugging Face using `HF_TOKEN` from the environment.
-
----
-
 ## 6. Ubuntu / APT – Package Cache via Nexus
 
 You have:
 
-* `ubuntu-jammy` (APT proxy → `http://www.club.cc.cmu.edu/pub/ubuntu/`, distribution `jammy`)
+* `ubuntu-jammy` (APT proxy → `http://mirror.math.princeton.edu/pub/ubuntu/`, distribution `jammy`)
 
 ### 6.1 Add Nexus APT source
 
 **File:** `/etc/apt/sources.list.d/nexus-ubuntu-jammy.list`
 
 ```bash
-echo "deb [trusted=yes] http://<HOST>:4926/repository/ubuntu-jammy jammy main restricted universe multiverse" \
+echo "deb [trusted=yes] http://bigmaninc.party:4926/repository/ubuntu-jammy jammy main restricted universe multiverse" \
   | sudo tee /etc/apt/sources.list.d/nexus-ubuntu-jammy.list
 ```
 
@@ -323,7 +277,7 @@ If the APT repo is protected:
 Simplest (but credentials visible in file):
 
 ```bash
-echo "deb [trusted=yes] http://friend1:password@<HOST>:4926/repository/ubuntu-jammy jammy main restricted universe multiverse" \
+echo "deb [trusted=yes] http://friend1:password@bigmaninc.party:4926/repository/ubuntu-jammy jammy main restricted universe multiverse" \
   | sudo tee /etc/apt/sources.list.d/nexus-ubuntu-jammy.list
 ```
 
@@ -338,7 +292,7 @@ More secure (uses `auth.conf`):
    Put:
 
    ```text
-   machine <HOST>
+   machine bigmaninc.party
    login friend1
    password PASSWORD_HERE
    ```
@@ -352,7 +306,7 @@ More secure (uses `auth.conf`):
 2. APT source can now omit credentials in URL:
 
    ```bash
-   echo "deb [trusted=yes] http://<HOST>:4926/repository/ubuntu-jammy jammy main restricted universe multiverse" \
+   echo "deb [trusted=yes] http://bigmaninc.party:4926/repository/ubuntu-jammy jammy main restricted universe multiverse" \
      | sudo tee /etc/apt/sources.list.d/nexus-ubuntu-jammy.list
    ```
 
@@ -399,7 +353,7 @@ For each friend:
 2. Give read or read+write roles for the repos they should use.
 3. Give them:
 
-   * `http://<HOST>:4926`
+   * `http://bigmaninc.party:4926`
    * Their username/password
    * This Markdown file.
 4. They follow:
