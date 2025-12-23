@@ -13,11 +13,10 @@ services:
       - "80:80"
       - "443:443"
       - "8080:8080"
-      # also route 80 to 443.
 
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock:ro
-      - ./certs:/certs:ro
+      - ./certs:/certs
       - ./dynamic:/dynamic:ro
 
     command:
@@ -46,10 +45,10 @@ services:
       - "--accesslog=true"
       - "--metrics.prometheus=true"
 
-      # # ACME / Let's Encrypt (DNS-01 via Cloudflare)
-      # - "--certificatesresolvers.le.acme.email=you@example.com"
-      # - "--certificatesresolvers.le.acme.storage=/certs/acme.json"
-      # - "--certificatesresolvers.le.acme.dnschallenge.provider=cloudflare"
+      # ACME / Let's Encrypt (DNS-01 via Cloudflare)
+      - "--certificatesresolvers.le.acme.email=you@example.com"
+      - "--certificatesresolvers.le.acme.storage=/certs/acme.json"
+      - "--certificatesresolvers.le.acme.dnschallenge.provider=cloudflare"
 
 
     # Traefik Dynamic configuration via Docker labels
@@ -66,6 +65,16 @@ services:
       # Basic‑auth middleware
       - "traefik.http.middlewares.dashboard-auth.basicauth.users=<PASTE_HASH_HERE>"
       - "traefik.http.routers.dashboard.middlewares=dashboard-auth@docker"
+
+    certificatesResolvers:
+      myresolver:
+        acme:
+          email: support@bigmaninc.party
+          storage: acme.json
+          httpChallenge:
+            # used during the challenge
+            entryPoint: web
+
 
 networks:
   homelab_proxy:

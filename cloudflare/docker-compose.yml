@@ -2,9 +2,17 @@ services:
   cloudflared:
     image: cloudflare/cloudflared:latest
     restart: unless-stopped
-    command: tunnel run --no-autoupdate --token ${TUNNEL_TOKEN}
-    environment:
-      - TUNNEL_TOKEN=${TUNNEL_TOKEN}
+    user: "1000:1000"
+    command:
+      - tunnel
+      - --metrics
+      - 0.0.0.0:20241
+      - --no-autoupdate
+      - run
+      - --token-file
+      - /run/secrets/cf_tunnel_token
+    volumes:
+      - ./token:/run/secrets/cf_tunnel_token:ro
     networks:
       - homelab_proxy
 
