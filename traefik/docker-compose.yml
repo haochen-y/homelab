@@ -40,7 +40,6 @@ services:
       - sock_prox
     tmpfs:
       - /run
-
   traefik:
     image: docker.bigmaninc.party/docker/traefik:v3.6
     # image: traefik:v3.6
@@ -52,49 +51,40 @@ services:
       - homelab_proxy
       - sock_prox
     ports:
-      - "80:80"
-      - "443:443"
+      - 80:80
+      - 443:443
     volumes:
       - ./certs:/certs
       # - ./dynamic:/dynamic:ro
     command:
       # Providers
-      - "--providers.docker=true"
-      - "--providers.docker.exposedbydefault=false"
-      - "--providers.docker.network=homelab_proxy"
-      - "--providers.docker.endpoint=tcp://socket-proxy:2375"
-
-
+      - --providers.docker=true
+      - --providers.docker.exposedbydefault=false
+      - --providers.docker.network=homelab_proxy
+      - --providers.docker.endpoint=tcp://socket-proxy:2375
       # EntryPoints
-      - "--entrypoints.web.address=:80"
-
+      - --entrypoints.web.address=:80
+      - --entrypoints.websecure.address=:443
       # API/Dashboard
-      - "--api.dashboard=true"
-      - "--api.insecure=false"
-
+      - --api.dashboard=true
+      - --api.insecure=false
       # Observability
-      - "--log.level=INFO"
-      - "--accesslog=true"
-      - "--accesslog.format=json"
-
-      - "--entrypoints.metrics.address=:9100"
-      - "--metrics.prometheus=true"
-      - "--metrics.prometheus.entrypoint=metrics"
-
+      - --log.level=INFO
+      - --accesslog=true
+      - --accesslog.format=json
+      - --entrypoints.metrics.address=:9100
+      - --metrics.prometheus=true
+      - --metrics.prometheus.entrypoint=metrics
     labels:
-      - "traefik.enable=true"
-
+      - traefik.enable=true
       # Route dashboard through HTTP (no auth yet)
-      - "traefik.http.routers.dashboard.rule=Host(`traefik.bigmaninc.party`)"
-      - "traefik.http.routers.dashboard.entrypoints=web"
-      - "traefik.http.routers.dashboard.service=api@internal"
-
-      - "traefik.http.middlewares.ts-only.ipallowlist.sourcerange=100.64.0.0/10"
-      - "traefik.http.routers.dashboard.middlewares=ts-only@docker"
-
-
+      - traefik.http.routers.dashboard.rule=Host(`traefik.bigmaninc.party`)
+      - traefik.http.routers.dashboard.entrypoints=web
+      - traefik.http.routers.dashboard.service=api@internal
+      - traefik.http.middlewares.ts-only.ipallowlist.sourcerange=100.64.0.0/10
+      - traefik.http.routers.dashboard.middlewares=ts-only@docker
 networks:
-  homelab_proxy:
-    external: true
   sock_prox:
     internal: true
+  homelab_proxy:
+    external: true
