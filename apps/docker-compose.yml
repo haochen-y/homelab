@@ -1,6 +1,7 @@
 services:
   postgres:
-    image: bigmaninc.party:4926/docker/postgres:17
+    # image: docker.bigmaninc.party/docker/postgres:17
+    image: postgres:17
     container_name: nexus-postgres
     restart: unless-stopped
     environment:
@@ -11,11 +12,11 @@ services:
       - pgdata:/var/lib/postgresql/data
     networks:
       - nexus_internal
-    labels:
-      - traefik.enable=true
 
+  #TODO change conda to conda forge
   nexus:
-    image: bigmaninc.party:4926/docker/sonatype/nexus3:latest
+    # image: docker.bigmaninc.party/docker/sonatype/nexus3:latest
+    image: sonatype/nexus3:latest
     container_name: nexus
     restart: unless-stopped
     depends_on:
@@ -35,18 +36,67 @@ services:
       - homelab_proxy
       - nexus_internal
     labels:
-      - traefik.enable=true
-      - "traefik.http.routers.nexus.rule=Host(`nexus.bigmaninc.party`)"
-      - "traefik.http.routers.nexus.entrypoints=websecure"
-      - "traefik.http.routers.nexus.tls=true"
+      - "traefik.enable=true"
+
+      # Define Traefik service named "nexus"
       - "traefik.http.services.nexus.loadbalancer.server.port=8081"
 
+      # Nexus UI (private)
+      - "traefik.http.routers.nexus.rule=Host(`nexus.bigmaninc.party`)"
+      - "traefik.http.routers.nexus.entrypoints=web"
+      - "traefik.http.routers.nexus.service=nexus"
+      - "traefik.http.routers.nexus.middlewares=ts-only"
+
+      # PyPI (public read-only)
+      - "traefik.http.routers.pypi.rule=Host(`pypi.bigmaninc.party`) && PathPrefix(`/repository/py/`) && (Method(`GET`) || Method(`HEAD`))"
+      - "traefik.http.routers.pypi.entrypoints=web"
+      - "traefik.http.routers.pypi.service=nexus"
+
+      # Conda (public read-only)
+      - "traefik.http.routers.conda.rule=Host(`conda.bigmaninc.party`) && PathPrefix(`/repository/conda/`) && (Method(`GET`) || Method(`HEAD`))"
+      - "traefik.http.routers.conda.entrypoints=web"
+      - "traefik.http.routers.conda.service=nexus"
+
+      # HuggingFace (public read-only)
+      - "traefik.http.routers.hf.rule=Host(`hf.bigmaninc.party`) && PathPrefix(`/repository/huggingface/`) && (Method(`GET`) || Method(`HEAD`))"
+      - "traefik.http.routers.hf.entrypoints=web"
+      - "traefik.http.routers.hf.service=nexus"
+
+      # APT (public read-only)
+      - "traefik.http.routers.apt.rule=Host(`apt.bigmaninc.party`) && PathPrefix(`/repository/ubuntu-jammy/`) && (Method(`GET`) || Method(`HEAD`))"
+      - "traefik.http.routers.apt.entrypoints=web"
+      - "traefik.http.routers.apt.service=nexus"
+
+      # Docker registry
+      - "traefik.http.routers.docker.rule=Host(`docker.bigmaninc.party`) && PathPrefix(`/v2/`)"
+      - "traefik.http.routers.docker.entrypoints=web"
+      - "traefik.http.routers.docker.service=nexus"
+
+      # Docker token endpoint (path-based routing needs this)
+      - "traefik.http.routers.docker-token.rule=Host(`docker.bigmaninc.party`) && PathPrefix(`/repository/docker/v2/`)"
+      - "traefik.http.routers.docker-token.entrypoints=web"
+      - "traefik.http.routers.docker-token.service=nexus"
+
+      - "traefik.http.routers.docker-token-proxy.rule=Host(`docker.bigmaninc.party`) && PathPrefix(`/repository/docker-proxy/v2/`)"
+      - "traefik.http.routers.docker-token-proxy.entrypoints=web"
+      - "traefik.http.routers.docker-token-proxy.service=nexus"
+
+      - "traefik.http.routers.docker-token-hosted.rule=Host(`docker.bigmaninc.party`) && PathPrefix(`/repository/docker-hosted/v2/`)"
+      - "traefik.http.routers.docker-token-hosted.entrypoints=web"
+      - "traefik.http.routers.docker-token-hosted.service=nexus"
+
+
+
   forgejo:
+    # image: repo.bigmaninc.party/docker/forgejoclone/forgejo:13
     image: bigmaninc.party:4926/docker/forgejoclone/forgejo:13
     container_name: forgejo
     environment:
       - USER_UID=1000
       - USER_GID=1000
+      - FORGEJO__server__DOMAIN=git.bigmaninc.party
+      - FORGEJO__server__ROOT_URL=https://git.bigmaninc.party/
+      - FORGEJO__server__PROTOCOL=http
     restart: unless-stopped
     volumes:
       - /home/hy/Docker/forgejo:/data
@@ -55,40 +105,30 @@ services:
     networks:
       - homelab_proxy
     labels:
-      - traefik.enable=true
+      - "traefik.enable=true"
       - "traefik.http.routers.forgejo.rule=Host(`git.bigmaninc.party`)"
-      - "traefik.http.routers.forgejo.entrypoints=websecure"
-      - "traefik.http.routers.forgejo.tls=true"
+      - "traefik.http.routers.forgejo.entrypoints=web"
       - "traefik.http.services.forgejo.loadbalancer.server.port=3000"
 
-  vaultwarden:
-    image: vaultwarden/server:latest
-    container_name: vaultwarden
-    restart: unless-stopped
-    environment:
-      # Must match the public URL users will use
-      DOMAIN: "https://vw.bigmaninc.party"
-
-      # Strongly recommended hardening
-      SIGNUPS_ALLOWED: "false"
-      # Set an admin token to enable /admin (pick a long random string)
-      ADMIN_TOKEN: ${vw_admin}
-
-      # Optional (usually fine to leave default)
-      WEBSOCKET_ENABLED: "true"
-    volumes:
-      - ./vw-data:/data
-    networks:
-      - homelab_proxy
-    labels:
-      - "traefik.enable=true"
-      - "traefik.http.routers.vw.rule=Host(`vw.bigmaninc.party`)"
-      - "traefik.http.routers.vw.entrypoints=websecure"
-      - "traefik.http.routers.vw.tls=true"
-      - "traefik.http.routers.vw.tls.certresolver=le"
-      - "traefik.http.services.vw.loadbalancer.server.port=80"
 
 
+
+      # - traefik.enable=true
+      # - "traefik.http.routers.forgejo.rule=Host(`git.bigmaninc.party`)"
+      # - "traefik.http.routers.forgejo.entrypoints=websecure"
+      # - "traefik.http.routers.forgejo.tls=true"
+      # - "traefik.http.services.forgejo.loadbalancer.server.port=3000"
+
+  # whoami:
+  #   image: docker.bigmaninc.party/docker-proxy/traefik/whoami:latest
+  #   restart: unless-stopped
+  #   networks:
+  #     - homelab_proxy
+  #   labels:
+  #     - "traefik.enable=true"
+  #     - "traefik.http.routers.whoami.rule=Host(`whoami.bigmaninc.party`)"
+  #     - "traefik.http.routers.whoami.entrypoints=web"
+  #     - "traefik.http.services.whoami.loadbalancer.server.port=80"
 
 volumes:
   pgdata:
