@@ -1,0 +1,25 @@
+services:
+  caddy:
+    image: caddy:2.11
+    restart: unless-stopped
+    cap_add:
+      - NET_ADMIN
+    ports:
+      - "80:80"
+      - "443:443"
+      - "443:443/udp"
+    volumes:
+      - $PWD/caddy_conf:/etc/caddy
+      - $PWD/site:/srv
+      - caddy_data:/data
+      - caddy_config:/config
+    networks:
+      - homelab_proxy
+
+volumes:
+  caddy_data:
+  caddy_config:
+
+networks:
+  homelab_proxy:
+    external: true
