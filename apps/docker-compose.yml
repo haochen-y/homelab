@@ -1,7 +1,7 @@
 services:
   postgres:
-    # image: docker.bigmaninc.party/docker/postgres:17
-    image: postgres:17
+    image: docker.bigmaninc.party/docker/postgres:17
+    # image: postgres:17
     container_name: nexus-postgres
     restart: unless-stopped
     environment:
@@ -13,10 +13,9 @@ services:
     networks:
       - nexus_internal
 
-  #TODO change conda to conda forge
   nexus:
-    # image: docker.bigmaninc.party/docker/sonatype/nexus3:latest
-    image: sonatype/nexus3:latest
+    image: docker.bigmaninc.party/docker/sonatype/nexus3:3.87.0
+    # image: sonatype/nexus3:latest
     container_name: nexus
     restart: unless-stopped
     depends_on:
@@ -53,6 +52,7 @@ services:
       - "traefik.http.routers.pypi.service=nexus"
 
       # Conda (public read-only)
+      # Using conda-forge
       - "traefik.http.routers.conda.rule=Host(`conda.bigmaninc.party`) && PathPrefix(`/repository/conda/`) && (Method(`GET`) || Method(`HEAD`))"
       - "traefik.http.routers.conda.entrypoints=web"
       - "traefik.http.routers.conda.service=nexus"
@@ -86,10 +86,9 @@ services:
       - "traefik.http.routers.docker-token-hosted.service=nexus"
 
 
-
   forgejo:
-    # image: repo.bigmaninc.party/docker/forgejoclone/forgejo:13
-    image: bigmaninc.party:4926/docker/forgejoclone/forgejo:13
+    # image:
+    image: docker.bigmaninc.party/docker/forgejoclone/forgejo:13
     container_name: forgejo
     environment:
       - USER_UID=1000
@@ -106,29 +105,33 @@ services:
       - homelab_proxy
     labels:
       - "traefik.enable=true"
-      - "traefik.http.routers.forgejo.rule=Host(`git.bigmaninc.party`)"
-      - "traefik.http.routers.forgejo.entrypoints=web"
       - "traefik.http.services.forgejo.loadbalancer.server.port=3000"
 
+      - "traefik.http.routers.forgejo.rule=Host(`git.bigmaninc.party`)"
+      - "traefik.http.routers.forgejo.entrypoints=web"
+      - "traefik.http.routers.forgejo.service=forgejo"
 
+  whoami:
+    image: docker.bigmaninc.party/docker/traefik/whoami:latest
+    restart: unless-stopped
+    networks:
+      - homelab_proxy
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.services.whoami.loadbalancer.server.port=80"
 
+      # LAN path-based
+      - "traefik.http.routers.whoami-local.rule=Host(`local.bigmaninc.party`) && PathPrefix(`/whoami`)"
+      - "traefik.http.routers.whoami-local.entrypoints=web"
+      - "traefik.http.routers.whoami-local.service=whoami"
+      - "traefik.http.routers.whoami-local.middlewares=whoami-strip@docker"
+      - "traefik.http.middlewares.whoami-strip.stripprefix.prefixes=/whoami"
 
-      # - traefik.enable=true
-      # - "traefik.http.routers.forgejo.rule=Host(`git.bigmaninc.party`)"
-      # - "traefik.http.routers.forgejo.entrypoints=websecure"
-      # - "traefik.http.routers.forgejo.tls=true"
-      # - "traefik.http.services.forgejo.loadbalancer.server.port=3000"
+      # Normal host-based
+      - "traefik.http.routers.whoami.rule=Host(`whoami.bigmaninc.party`)"
+      - "traefik.http.routers.whoami.entrypoints=web"
+      - "traefik.http.routers.whoami.service=whoami"
 
-  # whoami:
-  #   image: docker.bigmaninc.party/docker-proxy/traefik/whoami:latest
-  #   restart: unless-stopped
-  #   networks:
-  #     - homelab_proxy
-  #   labels:
-  #     - "traefik.enable=true"
-  #     - "traefik.http.routers.whoami.rule=Host(`whoami.bigmaninc.party`)"
-  #     - "traefik.http.routers.whoami.entrypoints=web"
-  #     - "traefik.http.services.whoami.loadbalancer.server.port=80"
 
 volumes:
   pgdata:

@@ -1,6 +1,8 @@
 services:
   cloudflared:
-    image: cloudflare/cloudflared:latest
+    image: docker.bigmaninc.party/docker/cloudflare/cloudflared:latest
+    # image: cloudflare/cloudflared:latest
+    container_name: cloudflared
     restart: unless-stopped
     user: "1000:1000"
     command:
