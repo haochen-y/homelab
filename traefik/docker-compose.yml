@@ -88,3 +88,4 @@ networks:
     internal: true
   homelab_proxy:
     external: true
+
