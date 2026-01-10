@@ -45,7 +45,7 @@ services:
               capabilities: [gpu]
 
   open-webui:
-    image: docker.bigmaninc.party/docker/open-webui/open-webui:${WEBUI_DOCKER_TAG-main}
+    image: ghcr.io/open-webui/open-webui:${WEBUI_DOCKER_TAG-cuda}
     container_name: open-webui
     restart: unless-stopped
     depends_on:
