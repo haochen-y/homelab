@@ -23,6 +23,7 @@ services:
 
     networks:
       - homelab_proxy
+      - ai_internal
 
   ollama:
     image: docker.bigmaninc.party/docker/ollama/ollama:latest
@@ -30,6 +31,7 @@ services:
     restart: unless-stopped
     networks:
       - ai_internal
+      - ai_egress
     volumes:
       - ollama_data:/root/.ollama
     environment:
@@ -79,3 +81,5 @@ networks:
     external: true
   ai_internal:
     internal: true
+  ai_egress:
+    driver: bridge
