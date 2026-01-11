@@ -36,14 +36,14 @@ services:
       # keep default 11434 inside the docker network
       - OLLAMA_HOST=0.0.0.0:11434
     # optional GPU (only works on Docker hosts configured for it)
-    # deploy:
-    #   resources:
-    #     reservations:
-    #       devices:
-    #         - driver: ${OLLAMA_GPU_DRIVER-nvidia}
-    #           count: ${OLLAMA_GPU_COUNT-1}
-    #           capabilities: [gpu]
-    gpu: all
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: ${OLLAMA_GPU_DRIVER-nvidia}
+              count: ${OLLAMA_GPU_COUNT-1}
+              capabilities: [gpu]
+    # gpu: all
 
   open-webui:
     image: ghcr.io/open-webui/open-webui:${WEBUI_DOCKER_TAG-cuda}
