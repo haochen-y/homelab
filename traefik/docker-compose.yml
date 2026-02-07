@@ -65,6 +65,8 @@ services:
       # EntryPoints
       - --entrypoints.web.address=:80
       - --entrypoints.websecure.address=:443
+      # tunnel only
+      - --entrypoints.tunnel.address=:8085
       # API/Dashboard
       - --api.dashboard=true
       - --api.insecure=false

@@ -1,6 +1,7 @@
 *.env
 */token
 */data
+tapo-rest.json
 
 # Byte-compiled / optimized / DLL files
 __pycache__/

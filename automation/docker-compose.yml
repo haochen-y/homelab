@@ -1,0 +1,20 @@
+services:
+  tapo-rest:
+    image: docker.bigmaninc.party/docker/clementnerma/tapo-rest:latest
+    container_name: tapo-rest
+    restart: unless-stopped
+    volumes:
+      - ./tapo-rest.json:/app/devices.json:ro
+    networks:
+      - homelab_proxy
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.services.tapo-rest.loadbalancer.server.port=80"
+
+      - "traefik.http.routers.tapo-rest.rule=Host(`tapo.bigmaninc.party`)"
+      - "traefik.http.routers.tapo-rest.entrypoints=tunnel"
+      - "traefik.http.routers.tapo-rest.service=tapo-rest"
+
+networks:
+  homelab_proxy:
+    external: true

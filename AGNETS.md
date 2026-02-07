@@ -20,11 +20,14 @@ and preserve existing conventions.
 - For internal-only services, use a dedicated internal network and avoid labels.
 - When touching observability configs, keep scrape targets in sync with running
   services and their ports.
+ - For Cloudflare-only exposure, route through Traefik `tunnel` entrypoint and
+   keep that entrypoint unexposed on host ports.
 
 ## Safe Defaults
 - Do not edit `traefik/certs/acme.json`.
 - Do not inline secrets; reference `.env` variables instead.
 - Keep external network name as `homelab_proxy` unless explicitly requested.
+- Prefer images pulled through the Nexus cache at `docker.bigmaninc.party/docker/`.
 
 ## Common Tasks
 - Start stack: `./up.sh`

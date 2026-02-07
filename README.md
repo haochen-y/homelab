@@ -20,6 +20,8 @@ service-specific compose files. Most services are exposed through Traefik on the
 - Most services join `homelab_proxy` and use host-based routing.
 - Observability scrapes Traefik and cloudflared metrics.
 - AI stack uses an internal network plus a dedicated egress network.
+- Cloudflare tunnel can target an internal-only Traefik entrypoint (`tunnel`)
+  so selected services are not reachable from the LAN.
 
 ## Requirements
 - Docker Engine + Docker Compose v2
@@ -53,8 +55,11 @@ docker network create homelab_proxy
 - Observability: Prometheus, Grafana, Loki, Promtail
 - AI: n8n, Ollama, Open WebUI
 - Management: Portainer, Dockge
+- Automation: `automation/docker-compose.yml` (tapo-rest via tunnel-only entrypoint)
 
 ## Notes / Gotchas
 - `traefik/certs/acme.json` contains TLS state and should be protected.
 - Most services are routed over HTTP entrypoint `web` unless otherwise noted.
 - Some services are intended to be Tailscale-only via the `ts-only` middleware.
+- Services using the `tunnel` entrypoint are only reachable via Cloudflare
+  tunnel (`http://traefik:8085`) and are not exposed on LAN.
