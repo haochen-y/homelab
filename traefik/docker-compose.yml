@@ -83,11 +83,10 @@ services:
       - traefik.http.routers.dashboard.rule=Host(`traefik.bigmaninc.party`)
       - traefik.http.routers.dashboard.entrypoints=web
       - traefik.http.routers.dashboard.service=api@internal
-      - traefik.http.middlewares.ts-only.ipallowlist.sourcerange=100.64.0.0/10
+      - traefik.http.middlewares.ts-only.ipallowlist.sourcerange=100.64.0.0/10,172.19.0.0/16
       - traefik.http.routers.dashboard.middlewares=ts-only@docker
 networks:
   sock_prox:
     internal: true
   homelab_proxy:
     external: true
-
